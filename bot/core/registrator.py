@@ -1,4 +1,5 @@
 from pyrogram import Client
+from better_proxy import Proxy
 
 from bot.config import settings
 from bot.core.agents import generate_random_user_agent
@@ -40,13 +41,18 @@ async def get_tg_client(session_name: str, proxy: str | None) -> Client:
     if not settings.API_ID or not settings.API_HASH:
         raise ValueError("API_ID and API_HASH not found in the .env file.")
 
+    proxy_obj = Proxy.from_str(proxy)
+    if not proxy_obj:
+        logger.error(f"Could not parse proxy {proxy} for session: {session_name}")
+        return None
+    
     proxy_dict = {
-        "scheme": proxy.split(":")[0],
-        "username": proxy.split(":")[1].split("//")[1],
-        "password": proxy.split(":")[2],
-        "hostname": proxy.split(":")[3],
-        "port": int(proxy.split(":")[4])
-    } if proxy else None
+        "scheme": proxy_obj.protocol,
+        "username": proxy_obj.login,
+        "password": proxy_obj.password,
+        "hostname": proxy_obj.host,
+        "port": proxy_obj.port
+    }
 
     tg_client = Client(
         name=session_name,

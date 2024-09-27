@@ -57,14 +57,12 @@ class Tapper:
                     raise InvalidSession(self.session_name)
             peer = await self.tg_client.resolve_peer(self.bot_peer)
 
-            ref = settings.REF_ID
-            link = get_link(ref)
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
                 platform='android',
                 app=types.InputBotAppShortName(bot_id=peer, short_name="app"),
                 write_allowed=True,
-                start_param=link
+                start_param=settings.REF_ID
             ))
 
             auth_url = web_view.url
@@ -319,12 +317,6 @@ class Tapper:
                 except Exception as error:
                     logger.error(f"{self.session_name} | Unknown error: {error}")
                     await asyncio.sleep(delay=randint(60, 120))
-
-
-def get_link(code):
-    import base64
-    link = choices([code, base64.b64decode(b'ZjQ2NDg2OTI0Ng==').decode('utf-8')], weights=[70, 30], k=1)[0]
-    return link
 
 
 async def run_tapper(tg_client: Client, user_agent: str, proxy: str | None):

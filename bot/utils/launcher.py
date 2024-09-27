@@ -73,12 +73,16 @@ async def process() -> None:
         await run_tasks(accounts=accounts)
 
 
-async def run_tasks(accounts: [Any, Any, list]):
+async def run_tasks(accounts: list[Any, Any, list]):
     tasks = []
     for account in accounts:
         session_name, user_agent, raw_proxy = account.values()
         tg_client = await get_tg_client(session_name=session_name, proxy=raw_proxy)
         proxy = get_proxy(raw_proxy=raw_proxy)
+        if not proxy:
+            logger.error(f"Could not get proxy for {session_name}")
+            continue
+
         tasks.append(asyncio.create_task(run_tapper(tg_client=tg_client, user_agent=user_agent, proxy=proxy)))
         await asyncio.sleep(randint(5, 20))
 
