@@ -1,3 +1,4 @@
+from better_proxy import Proxy
 from pyrogram import Client
 
 from bot.config import settings
@@ -19,7 +20,7 @@ async def register_sessions() -> None:
         return None
 
     raw_proxy = input("Input the proxy in the format type://user:pass:ip:port (press Enter to use without proxy): ")
-    session = await get_tg_client(session_name=session_name, proxy=raw_proxy)
+    session = await get_tg_client(session_name=session_name, proxy_str=raw_proxy)
     async with session:
         user_data = await session.get_me()
 
@@ -33,20 +34,25 @@ async def register_sessions() -> None:
     logger.success(f'Session added successfully @{user_data.username} | {user_data.first_name} {user_data.last_name}')
 
 
-async def get_tg_client(session_name: str, proxy: str | None) -> Client:
+async def get_tg_client(session_name: str, proxy_str: str | None) -> Client:
     if not session_name:
         raise FileNotFoundError(f"Not found session {session_name}")
 
     if not settings.API_ID or not settings.API_HASH:
         raise ValueError("API_ID and API_HASH not found in the .env file.")
 
+    proxy_obj = Proxy.from_str(proxy_str)
+    if not proxy_obj:
+        logger.error(f"Could not parse proxy {proxy_str} for session: {session_name}")
+        return None
+
     proxy_dict = {
-        "scheme": proxy.split(":")[0],
-        "username": proxy.split(":")[1].split("//")[1],
-        "password": proxy.split(":")[2],
-        "hostname": proxy.split(":")[3],
-        "port": int(proxy.split(":")[4])
-    } if proxy else None
+        "scheme": proxy_obj.protocol,
+        "username": proxy_obj.login,
+        "password": proxy_obj.password,
+        "hostname": proxy_obj.host,
+        "port": proxy_obj.port
+    }
 
     tg_client = Client(
         name=session_name,

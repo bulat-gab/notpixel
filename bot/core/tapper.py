@@ -453,9 +453,6 @@ class Tapper:
             if proxy:
                 await self.check_proxy(http_client=http_client, service_name="NotPixel", proxy=proxy)
 
-            ref = settings.REF_ID
-            link = get_link(ref)
-
             delay = randint(settings.START_DELAY[0], settings.START_DELAY[1])
             logger.info(f"{self.session_name} | Starting in {delay} seconds")
             await asyncio.sleep(delay=delay)
@@ -477,9 +474,10 @@ class Tapper:
                             continue
 
                     if time() - access_token_created_time >= token_live_time:
-                        tg_web_data = await self.get_tg_web_data(proxy=proxy, bot_peer=self.main_bot_peer, ref=link, short_name="app")
+                        tg_web_data = await self.get_tg_web_data(proxy=proxy, bot_peer=self.main_bot_peer, ref=settings.REF_ID, short_name="app")
                         if tg_web_data is None:
                             continue
+                        
 
                         http_client.headers["Authorization"] = f"initData {tg_web_data}"
                         logger.info(f"{self.session_name} | Started logining in")
@@ -541,15 +539,6 @@ class Tapper:
                 except Exception as error:
                     logger.error(f"{self.session_name} | Unknown error: {error}")
                     await asyncio.sleep(delay=randint(60, 120))
-
-
-def get_link(code):
-    import base64
-    link = choices([code, base64.b64decode(b'ZjcxMDEwNzUwNjk='), base64.b64decode(b'ZjUwODU5MjA3NDQ=').decode('utf-8'),
-                    base64.b64decode(b'ZjEyMzY5NzAyODc=').decode('utf-8'), base64.b64decode(b'ZjQ2NDg2OTI0Ng==').decode('utf-8')],
-                   weights=[70, 10, 5, 5, 10], k=1)[0]
-    return link
-
 
 async def run_tapper(tg_client: Client, user_agent: str, proxy: str | None, first_run: bool):
     try:
